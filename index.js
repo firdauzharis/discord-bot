@@ -30,6 +30,16 @@ client.on("messageCreate", async (msg) => {
       return;
     }
 
+    client.on("messageCreate", msg => {
+  if (!msg.guild) return; 
+  if (msg.author.bot) return; 
+
+  if (msg.content.toLowerCase().includes("hey bot, make team")) {
+    msg.reply("Roger that, forming teams...");
+  }
+});
+
+
     const members = [...channel.members.values()].map(m => m.user.username);
 
     // Randomize:
