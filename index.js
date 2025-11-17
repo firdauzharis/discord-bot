@@ -1,35 +1,49 @@
+import dotenv from "dotenv";
+dotenv.config();
 import { Client, GatewayIntentBits } from "discord.js";
-import fetch from "node-fetch";
-
-const TOKEN = process.env.DISCORD_TOKEN;
-const WEBHOOK = process.env.N8N_WEBHOOK;
+import axios from "axios";
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates
   ]
 });
 
 client.once("ready", () => {
-  console.log(`Bot online as ${client.user.tag}`);
+  console.log(`Bot logged in as ${client.user.tag}`);
 });
 
-client.on("messageCreate", async msg => {
+client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
 
-  if (msg.content.toLowerCase().trim() === "hey bot, make team") {
-    await fetch(WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        channel_id: "755703109791121469",
-        text_channel: msg.channelId,
-        user: msg.author.id
-      })
-    });
+  if (msg.content.toLowerCase().includes("hey bot, make team")) {
+    console.log("Command received!");
+
+    // Example: fetch users in your specific voice channel
+    const channel = msg.guild.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
+
+    if (!channel || channel.type !== 2) {
+      msg.reply("I can't find that voice channel!");
+      return;
+    }
+
+    const members = [...channel.members.values()].map(m => m.user.username);
+
+    // Randomize:
+    const shuffled = members.sort(() => Math.random() - 0.5);
+
+    msg.reply(`Randomized team:\n${shuffled.join("\n")}`);
+
+    // Optional: notify n8n
+    if (process.env.N8N_WEBHOOK_URL) {
+      axios.post(process.env.N8N_WEBHOOK_URL, {
+        members: shuffled
+      }).catch(() => {});
+    }
   }
 });
 
-client.login(TOKEN);
+client.login(process.env.DISCORD_TOKEN);
