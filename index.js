@@ -30,52 +30,16 @@ client.on("messageCreate", async (msg) => {
 
   const text = msg.content.toLowerCase();
 
+  // -------------------------------------------------------------
+  // UPDATED "MAKE TEAM" FEATURE
+  // -------------------------------------------------------------
   if (text.includes("hey bot, make team")) {
     console.log("Command received!");
 
-    const channel = msg.guild.channels.cache.get(
+    const sourceChannel = msg.guild.channels.cache.get(
       process.env.VOICE_CHANNEL_ID
     );
 
-    if (!channel || channel.type !== ChannelType.GuildVoice) {
+    if (!sourceChannel || sourceChannel.type !== ChannelType.GuildVoice) {
       msg.reply("I can't find that voice channel!");
       return;
-    }
-
-    const members = [...channel.members.values()].map(
-      (m) => m.user.username
-    );
-
-    if (members.length === 0) {
-      msg.reply("Voice channel is empty!");
-      return;
-    }
-
-    // Shuffle members
-    const shuffled = members.sort(() => Math.random() - 0.5);
-
-    // Reply
-    msg.reply(`Randomized team:\n${shuffled.join("\n")}`);
-
-    // Optional: send to n8n
-    if (process.env.N8N_WEBHOOK_URL) {
-      try {
-        await axios.post(process.env.N8N_WEBHOOK_URL, {
-          members: shuffled,
-        });
-      } catch (err) {
-        console.log("n8n webhook error:", err.message);
-      }
-    }
-  }
-});
-
-// -------------------------------------------------------------
-// KEEP-ALIVE WEB SERVER FOR RENDER
-// -------------------------------------------------------------
-const app = express();
-app.get("/", (req, res) => res.send("Bot is running."));
-app.listen(3000, () => console.log("Uptime server started"));
-
-// -------------------------------------------------------------
-client.login(process.env.DISCORD_TOKEN);
